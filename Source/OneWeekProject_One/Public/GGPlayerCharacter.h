@@ -10,7 +10,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-class UInputComponet;
+class UInputComponent;
 struct FInputActionValue;
 
 UCLASS()

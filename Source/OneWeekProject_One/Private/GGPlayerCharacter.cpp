@@ -108,7 +108,7 @@ void AGGPlayerCharacter::FireAbility(const FInputActionValue& Value)
 	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Fireability));
 }
 
-void AGGPlayerCharacter::SetupPlayerInputComponent(UInputComponet* PlayerInputComponent)
+void AGGPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
