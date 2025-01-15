@@ -39,9 +39,13 @@ void UGGHealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackDat
 	if (Data.EvaluatedData.Attribute == GetInDamageAttribute())
 	{
 		float InDamageDone = GetInDamage();
-		SetInDamage(0.0f);
+
+		UE_LOG(LogTemp, Warning, TEXT("Damage received: %f"), InDamageDone);
+
+		// is the damage greater then 0?
 		if (InDamageDone > 0.0f)
 		{
+			// checking if there are any listeners for the OnDamageTaken event before broadcasting the damage.
 			if (OnDamageTaken.IsBound())
 			{
 				const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
@@ -51,6 +55,7 @@ void UGGHealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackDat
 				OnDamageTaken.Broadcast(Instigator, Causer, Data.EffectSpec.CapturedSourceTags.GetSpecTags(), Data.EvaluatedData.Magnitude);
 			}
 
+			// if the shield is greater then 0, then we want to subtract from the shield first then health
 			if (GetShield() > 0.0f)
 			{
 				const float NewSheild = GetShield() - InDamageDone;
@@ -58,11 +63,16 @@ void UGGHealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackDat
 				SetShield(FMath::Clamp(NewSheild, 0.0f, GetMaxHealth()));
 			}
 
+			/// is the damage still greater then 0 and health is greater then 0?
 			if (InDamageDone > 0.0f && GetHealth() > 0.0f)
 			{
 				const float NewHealth = GetHealth() - InDamageDone;
 				SetHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
 			}
 		}
+
+		// You're resetting the damage value after applying it to shields and health, so it won't affect future calculations.
+		SetInDamage(0.0f);
+
 	}
 }
