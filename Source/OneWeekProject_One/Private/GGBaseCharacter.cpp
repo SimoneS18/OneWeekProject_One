@@ -6,7 +6,7 @@
 // Sets default values
 AGGBaseCharacter::AGGBaseCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+		// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>("AbilitySystemComp");
@@ -19,7 +19,11 @@ void AGGBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	HealthSet->OnDamageTaken.AddUObject(this, &AGGBaseCharacter::OnDamageTakenChanged);
+	if (HealthSet)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Binding to OnDamageTaken"));
+		HealthSet->OnDamageTaken.AddUObject(this, &AGGBaseCharacter::OnDamageTakenChanged);
+	}
 
 	// subscribe to attribute changing
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HealthSet->GetHealthAttribute()).AddUObject(this, &AGGBaseCharacter::OnHealthAttributeChanged);

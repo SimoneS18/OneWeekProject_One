@@ -39,7 +39,6 @@ public:
 	UGGHealthSet();
 
 	// Health
-
 	// character Health
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes", Meta = (AllowPrivateAccess = true))
 	FGameplayAttributeData Health;
@@ -99,15 +98,84 @@ public:
 	FGameplayAttributeData LifeSteal;
 	ATTRIBUTE_ACCESSORS(UGGHealthSet, LifeSteal);
 
+	// Critical Chance
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes", Meta = (AllowPrivateAccess = true))
+	FGameplayAttributeData CritChance;
+	ATTRIBUTE_ACCESSORS(UGGHealthSet, CritChance);
+
 	// Critical Hit Resistance (reduces critical damage taken) 
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes", Meta = (AllowPrivateAccess = true))
+	FGameplayAttributeData CritMultiplier;
+	ATTRIBUTE_ACCESSORS(UGGHealthSet, CritMultiplier);
+
+	// Critical Hit Resistance (reduces critical damage taken)
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes", Meta = (AllowPrivateAccess = true))
 	FGameplayAttributeData CritResistance;
 	ATTRIBUTE_ACCESSORS(UGGHealthSet, CritResistance);
 
+	// Attribute Replication
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DamageAdd, Category = "Attributes", Meta = (AllowPrivateAccess = true))
+	FGameplayAttributeData DamageAdd;
+	ATTRIBUTE_ACCESSORS(UGGHealthSet, DamageAdd);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DamageMulti, Category = "Attributes", Meta = (AllowPrivate))
+	FGameplayAttributeData DamageMulti;
+	ATTRIBUTE_ACCESSORS(UGGHealthSet, DamageMulti);
+
+	// Delegate for when damage is taken
 	mutable FDamageTakenEvent OnDamageTaken;
 
 protected:
-	virtual void ClampAttributeOnChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void ClampAttributeOnChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
+	UFUNCTION()
+	virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);
+
+	UFUNCTION()
+	virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth);
+
+	UFUNCTION()
+	virtual void OnRep_HealthRegenRate(const FGameplayAttributeData& OldHealthRegenRate);
+
+	UFUNCTION()
+	virtual void OnRep_Shield(const FGameplayAttributeData& OldShield);
+
+	UFUNCTION()
+	virtual void OnRep_MaxShield(const FGameplayAttributeData& OldMaxShield);
+
+	UFUNCTION()
+	virtual void OnRep_ShieldRegenRate(const FGameplayAttributeData& OldShieldRegenRate);
+
+	UFUNCTION()
+	virtual void OnRep_ShieldBreakCooldown(const FGameplayAttributeData& OldShieldBreakCooldown);
+
+	UFUNCTION()
+	virtual void OnRep_ShieldAbsorptionRate(const FGameplayAttributeData& OldShieldAbsorptionRate);
+
+	UFUNCTION()
+	virtual void OnRep_InDamage(const FGameplayAttributeData& OldInDamage);
+
+	UFUNCTION()
+	virtual void OnRep_DamageResistance(const FGameplayAttributeData& OldDamageResistance);
+
+	UFUNCTION()
+	virtual void OnRep_LifeSteal(const FGameplayAttributeData& OldLifeSteal);
+
+	UFUNCTION()
+	virtual void OnRep_CritMultiplier(const FGameplayAttributeData& OldCritMultiplier);
+
+	UFUNCTION()
+	virtual void OnRep_CritResistance(const FGameplayAttributeData& OldCritResistance);
+
+	UFUNCTION()
+	virtual void OnRep_DamageAdd(const FGameplayAttributeData& OldDamageAdd);
+
+	UFUNCTION()
+	virtual void OnRep_DamageMulti(const FGameplayAttributeData& OldDamageMulti);
 };

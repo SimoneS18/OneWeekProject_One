@@ -3,3 +3,11 @@
 
 #include "GGEnemyCharacter.h"
 
+AGGEnemyCharacter::AGGEnemyCharacter()
+{
+}
+
+void AGGEnemyCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+}

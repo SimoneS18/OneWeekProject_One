@@ -46,6 +46,8 @@ class ONEWEEKPROJECT_ONE_API AGGPlayerCharacter : public AGGBaseCharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* FireAbilityAction;
 
+	// todo add second fire ability action
+
 public:
 	// Sets default values for this character's properties
 	AGGPlayerCharacter();
