@@ -20,20 +20,10 @@ UGGHealthSet::UGGHealthSet()
 	CritMultiplier(2.0f),
 	CritResistance(0.0f),
 	DamageAdd(0.0f),
-	DamageMulti(1.0f)
+	DamageMultiplier(1.0f),
+	ShieldAdd(0.0f),
+	ShieldMultiplier(1.0f)
 { }
-
-void UGGHealthSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
-{
-	Super::PreAttributeBaseChange(Attribute, NewValue);
-	ClampAttributeOnChange(Attribute, NewValue);
-}
-
-void UGGHealthSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
-{
-	Super::PreAttributeChange(Attribute, NewValue);
-	ClampAttributeOnChange(Attribute, NewValue);
-}
 
 void UGGHealthSet::ClampAttributeOnChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
@@ -49,13 +39,10 @@ void UGGHealthSet::ClampAttributeOnChange(const FGameplayAttribute& Attribute, f
 
 void UGGHealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
-	UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute Triggered!"));
-
 	Super::PostGameplayEffectExecute(Data);
 
 	if (Data.EvaluatedData.Attribute == GetInDamageAttribute())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute Triggered! Damage Received: %f"), GetInDamage());
 
 		float InDamageDone = GetInDamage();
 
@@ -87,13 +74,6 @@ void UGGHealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackDat
 				SetHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
 			}
 		}
-// 
-// 		const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
-// 		const FHitResult* Hit = EffectContext.GetHitResult();
-// 		if (Hit)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("Hit Bone: %s"), *Hit->BoneName.ToString());
-// 		}
 
 		// You're resetting the damage value after applying it to shields and health, so it won't affect future calculations.
 		SetInDamage(0.0f);
@@ -119,7 +99,9 @@ void UGGHealthSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, CritMultiplier, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, CritResistance, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, DamageAdd, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, DamageMulti, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, DamageMultiplier, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, ShieldAdd, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, ShieldMultiplier, COND_None, REPNOTIFY_Always);
 }
 
 // OnRep_ functions are automatically called when a replicated variable changes on a client.
@@ -194,7 +176,17 @@ void UGGHealthSet::OnRep_DamageAdd(const FGameplayAttributeData& OldDamageAdd)
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, DamageAdd, OldDamageAdd);
 }
 
-void UGGHealthSet::OnRep_DamageMulti(const FGameplayAttributeData& OldDamageMulti)
+void UGGHealthSet::OnRep_DamageMultiplier(const FGameplayAttributeData& OldDamageMultiplier)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, DamageMulti, OldDamageMulti);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, DamageMultiplier, OldDamageMultiplier);
+}
+
+void UGGHealthSet::OnRep_SheildAdd(const FGameplayAttributeData& OldShieldAdd)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, ShieldAdd, OldShieldAdd);
+}
+
+void UGGHealthSet::OnRep_ShieldMultiplier(const FGameplayAttributeData& OldShieldMultiplier)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, ShieldMultiplier, OldShieldMultiplier);
 }

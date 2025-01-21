@@ -43,49 +43,41 @@ void UGGGameplayEffectDamageCalcu::Execute_Implementation(const FGameplayEffectC
 {
 	UE_LOG(LogTemp, Warning, TEXT("Executing Damage Calculation"));
 
-    UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
-    UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
-    AActor* TargetActor = TargetASC ? TargetASC->GetAvatarActor() : nullptr;
+	UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
+	UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
+	AActor* TargetActor = TargetASC ? TargetASC->GetAvatarActor() : nullptr;
 
-    const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
-    const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
-    const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
+	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
+	const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
+	const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
 
-    FAggregatorEvaluateParameters EvaluationParameters;
-    EvaluationParameters.SourceTags = SourceTags;
-    EvaluationParameters.TargetTags = TargetTags;
+	FAggregatorEvaluateParameters EvaluationParameters;
+	EvaluationParameters.SourceTags = SourceTags;
+	EvaluationParameters.TargetTags = TargetTags;
 
 	float TargetHealth = 0.0f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().HealthDef, EvaluationParameters, TargetHealth);
-    
-    float InDamage = FMath::Max(Spec.GetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Damage.SetByCaller")), false, -1.0f), 0.0f);
 
-	// Ensure we don't apply more damage than the target's current health
-	if (InDamage >= TargetHealth)
+	//float InDamage = FMath::Max(Spec.GetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Damage.SetByCaller")), false, -1.0f), 0.0f);
+
+	float InDamage = 0.0f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().InDamageDef, EvaluationParameters, InDamage);
+
+	FGameplayEffectSpec* MutableSpec = ExecutionParams.GetOwningSpecForPreExecuteMod();;
+	float CritChance = 0.0f;
+	float CritMultiplier = 0.0f;
+
+	const FHitResult* Hit = Spec.GetEffectContext().GetHitResult();
+
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CritChanceDef, EvaluationParameters, CritChance);
+	if (Hit && Hit->BoneName == "head")
+		CritChance += 100.0f;
+
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CritMultiplierDef, EvaluationParameters, CritMultiplier);
+	if (CritChance > 1.0f)
 	{
-		InDamage = TargetHealth; // Prevents health from going negative
+		InDamage *= CritMultiplier;
 	}
-
-    FGameplayEffectSpec* MutableSpec = ExecutionParams.GetOwningSpecForPreExecuteMod();;
-    float CritChance = 0.0f;
-    float CritMultiplier = 0.0f;
-
-    const FHitResult* Hit = Spec.GetEffectContext().GetHitResult();
-
-    ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CritChanceDef, EvaluationParameters, CritChance);
-    if (Hit && Hit->BoneName == "head")
-        CritChance += 100.0f;
-
-    ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CritMultiplierDef, EvaluationParameters, CritMultiplier);
-    if (CritChance > 1.0f)
-    {
-        InDamage *= CritMultiplier;
-    }
-
-	UE_LOG(LogTemp, Warning, TEXT("Final Damage Applied: %f"), InDamage);
-	UE_LOG(LogTemp, Warning, TEXT("Crit Chance: %f"), CritChance);
-	UE_LOG(LogTemp, Warning, TEXT("Crit Multiplier: %f"), CritMultiplier);
-	UE_LOG(LogTemp, Warning, TEXT("Hit Bone: %s"), *Hit->BoneName.ToString());
 
 	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(DamageStatics().InDamageProperty, EGameplayModOp::Additive, InDamage));
 
