@@ -114,30 +114,21 @@ public:
 	ATTRIBUTE_ACCESSORS(UGGHealthSet, CritResistance);
 
 	// Attribute Replication
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", Meta = (AllowPrivateAccess = true))
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DamageAdd, Category = "Attributes", Meta = (AllowPrivateAccess = true))
 	FGameplayAttributeData DamageAdd;
 	ATTRIBUTE_ACCESSORS(UGGHealthSet, DamageAdd);
 
-	// Attribute Replication
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", Meta = (AllowPrivateAccess = true))
-	FGameplayAttributeData DamageMultiplier;
-	ATTRIBUTE_ACCESSORS(UGGHealthSet, DamageMultiplier);
-
-	// Attribute Replication
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", Meta = (AllowPrivateAccess = true))
-	FGameplayAttributeData ShieldAdd;
-	ATTRIBUTE_ACCESSORS(UGGHealthSet, ShieldAdd);
-
-	// Attribute Replication
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", Meta = (AllowPrivateAccess = true))
-	FGameplayAttributeData ShieldMultiplier;
-	ATTRIBUTE_ACCESSORS(UGGHealthSet, ShieldMultiplier);
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DamageMulti, Category = "Attributes", Meta = (AllowPrivate))
+	FGameplayAttributeData DamageMulti;
+	ATTRIBUTE_ACCESSORS(UGGHealthSet, DamageMulti);
 
 	// Delegate for when damage is taken
 	mutable FDamageTakenEvent OnDamageTaken;
 
 protected:
 
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void ClampAttributeOnChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 
@@ -186,11 +177,5 @@ protected:
 	virtual void OnRep_DamageAdd(const FGameplayAttributeData& OldDamageAdd);
 
 	UFUNCTION()
-	virtual void OnRep_DamageMultiplier(const FGameplayAttributeData& OldDamageMultiplier);
-	
-	UFUNCTION()
-	virtual void OnRep_SheildAdd(const FGameplayAttributeData& OldShieldAdd);
-
-	UFUNCTION()
-	virtual void OnRep_ShieldMultiplier(const FGameplayAttributeData& OldShieldMulti);
+	virtual void OnRep_DamageMulti(const FGameplayAttributeData& OldDamageMulti);
 };

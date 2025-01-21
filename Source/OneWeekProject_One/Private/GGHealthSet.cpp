@@ -20,10 +20,21 @@ UGGHealthSet::UGGHealthSet()
 	CritMultiplier(2.0f),
 	CritResistance(0.0f),
 	DamageAdd(0.0f),
-	DamageMultiplier(1.0f),
-	ShieldAdd(0.0f),
-	ShieldMultiplier(1.0f)
+	DamageMulti(1.0f)
 { }
+
+void UGGHealthSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+	ClampAttributeOnChange(Attribute, NewValue);
+}
+
+void UGGHealthSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	// This is called whenever attributes change, so for max health/mana we want to scale the current totals to match
+	Super::PreAttributeChange(Attribute, NewValue);
+	ClampAttributeOnChange(Attribute, NewValue);
+}
 
 void UGGHealthSet::ClampAttributeOnChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
@@ -41,9 +52,29 @@ void UGGHealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackDat
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
+	UAbilitySystemComponent* Source = Context.GetOriginalInstigatorAbilitySystemComponent();
+	const FGameplayTagContainer& SourceTags = *Data.EffectSpec.CapturedSourceTags.GetAggregatedTags();
+
+	// Compute the delta between old and new, if it is available
+	float DeltaValue = 0;
+	if (Data.EvaluatedData.ModifierOp == EGameplayModOp::Type::Additive)
+	{
+		// If this was additive, store the raw delta value to be passed along later
+		DeltaValue = Data.EvaluatedData.Magnitude;
+	}
+
+	// Get the Target actor, which should be our owner
+	AActor* TargetActor = nullptr;
+	AController* TargetController = nullptr;
+	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+	{
+		TargetActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+		TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+	}
+
 	if (Data.EvaluatedData.Attribute == GetInDamageAttribute())
 	{
-
 		float InDamageDone = GetInDamage();
 
 		// is the damage greater then 0?
@@ -74,13 +105,22 @@ void UGGHealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackDat
 				SetHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
 			}
 		}
+// 
+// 		const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
+// 		const FHitResult* Hit = EffectContext.GetHitResult();
+// 		if (Hit)
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("Hit Bone: %s"), *Hit->BoneName.ToString());
+// 		}
 
 		// You're resetting the damage value after applying it to shields and health, so it won't affect future calculations.
 		SetInDamage(0.0f);
 
 	}
+
 }
 
+// 
 void UGGHealthSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -99,9 +139,7 @@ void UGGHealthSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, CritMultiplier, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, CritResistance, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, DamageAdd, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, DamageMultiplier, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, ShieldAdd, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, ShieldMultiplier, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UGGHealthSet, DamageMulti, COND_None, REPNOTIFY_Always);
 }
 
 // OnRep_ functions are automatically called when a replicated variable changes on a client.
@@ -176,17 +214,7 @@ void UGGHealthSet::OnRep_DamageAdd(const FGameplayAttributeData& OldDamageAdd)
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, DamageAdd, OldDamageAdd);
 }
 
-void UGGHealthSet::OnRep_DamageMultiplier(const FGameplayAttributeData& OldDamageMultiplier)
+void UGGHealthSet::OnRep_DamageMulti(const FGameplayAttributeData& OldDamageMulti)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, DamageMultiplier, OldDamageMultiplier);
-}
-
-void UGGHealthSet::OnRep_SheildAdd(const FGameplayAttributeData& OldShieldAdd)
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, ShieldAdd, OldShieldAdd);
-}
-
-void UGGHealthSet::OnRep_ShieldMultiplier(const FGameplayAttributeData& OldShieldMultiplier)
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, ShieldMultiplier, OldShieldMultiplier);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGGHealthSet, DamageMulti, OldDamageMulti);
 }
